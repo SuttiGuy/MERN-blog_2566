@@ -3,7 +3,7 @@ import Post from '../components/Post'
 
 const IndexPage = () => {
   return (
-    <div>IndexPage
+    <div>
     <Post />
     <Post />
     <Post />
@@ -12,4 +12,4 @@ const IndexPage = () => {
   )
 }
 
-export default IndexPage
+export default IndexPage;

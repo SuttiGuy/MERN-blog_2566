@@ -21,7 +21,7 @@ const Post = () => {
         </h2>
         </Link>
         <p className="info">
-          <a href="" className="author"> Suttiguy </a>
+          <a className="author"> Suttiguy </a>
           <time> 13 December 2023 - 15:52 </time>
         </p>
         <p className="summary">
@@ -38,4 +38,4 @@ const Post = () => {
   )
 }
 
-export default Post
+export default Post;
