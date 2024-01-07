@@ -3,17 +3,17 @@ import { Link } from "react-router-dom";
 import {format} from "date-fns"
 const baseURL = import.meta.env.VITE_BASE_URL;
 
-const Post = ({ cover, title, author, createdAt, summary }) => {
+const Post = ({_id, cover, title, author, createdAt, summary }) => {
   console.log(cover, author);
   return (
     <div className="post">
       <div className="image">
-        <Link>
+        <Link to={`/post/${_id}`}>
           <img src={`${baseURL}/${cover}`} alt="" />
         </Link>
       </div>
       <div className="texts">
-        <Link>
+        <Link to={`/post/${_id}`}>
           <h2>{title}</h2>
         </Link>
         <p className="info">

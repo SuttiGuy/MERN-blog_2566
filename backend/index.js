@@ -11,6 +11,7 @@ const multer = require("multer");
 const uploadMiddleware = multer({ dest: "uploads/" });
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
+const { log } = require("console");
 const app = express();
 
 app.use(cors({ credentials: true, origin: "http://localhost:5173" }));
@@ -98,6 +99,75 @@ app.post("/post", uploadMiddleware.single("file"), async (req, res) => {
     });
     res.json(postDoc);
   });
+});
+
+app.get("/post/:id" , async (req,res) =>{
+    const {id} = req.params;
+    const postDoc = await Post.findById(id).populate("author", ["username"]); 
+    //const postDoc = await Post.findOne(_id:id).populate("author", ["username"]); 
+    res.json(postDoc)
+})
+
+
+// Delete Post
+app.delete("/posts/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Delete by ID
+    const deletedPost = await Post.findByIdAndDelete(id);
+    if (deletedPost) {
+      // If deletion is successful
+      res.json({ message: "Post deleted successfully", deletedPost });
+    } else {
+      // If the specified ID is not found
+      res.status(404).json({ message: "Post not found" });
+    }
+  } catch (error) {
+    console.error("Error deleting post:", error.message);
+    res.status(500).json("Internal Server Error");
+  }
+});
+
+//Edit
+app.post("/posts/:id", uploadMiddleware.single("file"), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+     // ดึงข้อมูลโพสต์ (title, summary, content) จากรีเควสบอดี้
+    const { title, summary, content } = req.body;
+    let updateData = { title, summary, content };
+
+    if (req.file) {
+      // ดึงข้อมูลเกี่ยวกับไฟล์ที่อัปโหลด
+      const { originalname, path } = req.file;
+      
+      const parts = originalname.split(".");
+      const ext = parts[parts.length - 1];
+      const newPath = path + "." + ext;
+
+      await fs.promises.rename(path, newPath);
+      updateData = { ...updateData, cover: newPath };
+    }
+
+    const existingPost = await Post.findById(id);
+     // ดึง path ของ cover image ถ้ามี
+    const existingCoverPath = existingPost ? existingPost.cover : '';
+
+    const cover = req.file ? updateData.cover : existingCoverPath;
+    // อัปเดตโพสต์ในฐานข้อมูลและรับโพสต์ที่อัปเดตแล้ว
+    const updatedPost = await Post.findByIdAndUpdate(id, { ...updateData, cover }, {
+      new: true,
+    });
+
+    if (updatedPost) {
+      res.json(updatedPost);
+    } else {
+      res.status(404).json({ message: "Post not found" });
+    }
+  } catch (error) {
+    console.error("Error updating post:", error.message);
+    res.status(500).json("Internal Server Error");
+  }
 });
 
 const POST = process.env.POST;

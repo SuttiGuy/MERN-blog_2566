@@ -1,31 +1,112 @@
-import React from 'react'
+import { useEffect, useState, useContext } from "react";
+import { format } from "date-fns";
+import { useParams, Link } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
+import { useNavigate } from "react-router-dom";
+const baseURL = import.meta.env.VITE_BASE_URL;
 
 const PostPage = () => {
+  const [postInfo, setPostInfo] = useState(null);
+  const navigate = useNavigate();
+  const { userInfo } = useContext(UserContext);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const { id } = useParams();
+  useEffect(() => {
+    fetch(`${baseURL}/post/${id}`).then((response) => {
+      response.json().then((posts) => {
+        setPostInfo(posts);
+      });
+    });
+  }, [id]);
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`${baseURL}/posts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        console.log("Post deleted successfully!");
+        navigate("/");
+      } else {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error.message);
+    }
+  };
+
+  if (!postInfo) return "";
+  console.log(postInfo);
+
   return (
     <div className="post-page">
-        <h1>
-        {" "}
-        บล็อก (Blog) คือเว็บไซด์รูปแบบหนึ่ง ที่มีลักษณะรูปร่างหน้าตาคล้ายๆกับการเขียนไดอารี่
-        หรือ บันทึกส่วนตัว ซึ่งเป็นที่นิยมกันมากในปัจจุบัน เนื่องจากเราใช้ฟรี ไม่ต้องเสียเงิน
-        คำว่า "Blog" มาจากคำเต็มว่า "Weblog" (ตัด We ทิ้ง คงเหลือแต่ blog) 
-        </h1>
-        <time> 13 December 2023 - 15:52 </time>
-        <div className="author"> By @Suttiguy </div>
-        <div className="image">
-        <img src="https://4.bp.blogspot.com/-YtiMvdOCKbk/UrS_pj69SSI/AAAAAAAACvo/WIV5xlTZnu0/s1600/what-is-blog.jpg"
-         alt="" 
-         />
+      <h1>{postInfo.title}</h1>
+      <time>{format(new Date(postInfo.createdAt), "dd MMMM yyyy HH:MM")} </time>
+      <div className="author"> By @{postInfo.author.username} </div>
+      {userInfo?.id === postInfo.author._id && (
+        <div className="edit-row">
+          <Link className="edit-btn" to={`/edit/${postInfo._id}`}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+              />
+            </svg>
+            EditPost
+          </Link>
+          <Link
+            className="delete-btn"
+            to="#"
+            onClick={() => setShowDeleteConfirmation(true)}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            Delete This post
+          </Link>
+          {showDeleteConfirmation && (
+            <div className="delete-confirmation">
+              <p>Are you sure you want to delete this post?</p>
+              <button onClick={() => handleDelete()}>Yes, Delete</button>
+              <button onClick={() => setShowDeleteConfirmation(false)}>
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
-        <div className="content" >
-        Blog ใช้ทำอะไรได้บ้าง?
-- ทำBlog เป็นเว็บไซด์ส่วนตัว เพื่อแชร์ข้อมูลส่วนตัวให้กับผู้อื่นๆ เช่น บันทึกไดอารี่
-- เขียนBlog เพื่อบอกเล่าเรื่องราวต่างๆ นำเสนอสิ่งที่ตนเองรู้ หรือสิ่งที่ตนเองสนใจ เพื่อแบ่งปันให้กับผู้อื่น
-- สร้างBlog ทำเป็นเว็บไซด์เพื่อใช้ในการโปรโมทธุรกิจ ร้านค้า บริการต่างๆ
-- ใช้Blog ในการทำธุรกิจขายสินค้าออนไลน์ (E-Commerce)
-        </div>
-        
+      )}
+      <div className="image">
+        <Link>
+          <img src={`${baseURL}/${postInfo.cover}`} alt="" />
+        </Link>
+      </div>
+      <div
+        className="content"
+        dangerouslySetInnerHTML={{ __html: postInfo.content }}
+      ></div>
     </div>
-  )
-}
+  );
+};
 
-export default PostPage
+export default PostPage;
